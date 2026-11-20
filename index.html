@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>የኛ Bingo</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#101827;color:white;
+ font-family:Arial,sans-serif;text-align:center;
+}
+header{
+ padding:22px;background:#17243a;
+ color:#42baff;font-size:27px;font-weight:bold;
+}
+main{padding:16px;max-width:650px;margin:auto}
+.card{
+ background:#1c2a40;padding:18px;
+ border-radius:18px;margin:15px 0;
+}
+h2{color:#42baff}
+button{
+ border:0;border-radius:12px;padding:14px 22px;
+ background:#168ee5;color:white;font-size:17px;
+ margin:5px;font-weight:bold;
+}
+#numbers{
+ display:grid;grid-template-columns:repeat(8,1fr);
+ gap:6px;
+}
+.num{
+ background:#30415a;padding:9px 2px;
+ border-radius:7px;font-size:14px;
+}
+.selected{background:#168ee5}
+.called{background:#13a66b}
+#last{
+ font-size:65px;color:#ffd45c;
+ font-weight:bold;padding:15px;
+}
+</style>
+</head>
+<body>
+
+<header>🎱 የኛ BINGO</header>
+
+<main>
+ <div class="card">
+  <h2>የቲኬት ምርጫ</h2>
+  <p>እስከ 4 ቲኬቶች መምረጥ ትችላለህ</p>
+  <h2 id="timer">40</h2>
+  <div id="numbers"></div>
+  <p id="count">የመረጥካቸው: 0 / 4</p>
+ </div>
+
+ <div class="card">
+  <h2>የBINGO ጨዋታ</h2>
+  <div id="last">--</div>
+  <p id="status">ጨዋታው አልተጀመረም</p>
+  <button onclick="startGame()">Start</button>
+  <button onclick="pauseGame()">Pause</button>
+  <button onclick="resetGame()">Reset</button>
+  <div id="board" style="display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin-top:18px"></div>
+ </div>
+</main>
+
+<script>
+let selected=[];
+let taken=[];
+let seconds=40;
+let timer;
+let gameTimer;
+let available=[];
+let running=false;
+
+const numbers=document.getElementById("numbers");
+const board=document.getElementById("board");
+
+for(let i=1;i<=400;i++){
+ let b=document.createElement("div");
+ b.className="num";
+ b.textContent=i;
+ b.onclick=()=>{
+  if(seconds<=0)return;
+  if(selected.includes(i)){
+   selected=selected.filter(x=>x!==i);
+   b.classList.remove("selected");
+  }else if(selected.length<4){
+   selected.push(i);
+   b.classList.add("selected");
+  }
+  document.getElementById("count").textContent=
+   "የመረጥካቸው: "+selected.length+" / 4";
+ };
+ numbers.appendChild(b);
+}
+
+for(let i=1;i<=75;i++){
+ let b=document.createElement("div");
+ b.className="num";
+ b.id="n"+i;
+ b.textContent=i;
+ board.appendChild(b);
+}
+
+timer=setInterval(()=>{
+ if(seconds>0){
+  seconds--;
+  document.getElementById("timer").textContent=seconds;
+ }
+ if(seconds===0){
+  clearInterval(timer);
+  startGame();
+ }
+},1000);
+
+function startGame(){
+ if(running)return;
+ if(available.length===0){
+  available=Array.from({length:75},(_,i)=>i+1);
+ }
+ running=true;
+ document.getElementById("status").textContent="ጨዋታው ተጀምሯል!";
+ gameTimer=setInterval(()=>{
+  if(!available.length){
+   pauseGame();
+   document.getElementById("status").textContent="ጨዋታው ተጠናቋል";
+   return;
+  }
+  let index=Math.floor(Math.random()*available.length);
+  let n=available.splice(index,1)[0];
+  document.getElementById("last").textContent=n;
+  document.getElementById("n"+n).classList.add("called");
+  let voice=new SpeechSynthesisUtterance("Bingo "+n);
+  voice.lang="en-US";
+  speechSynthesis.speak(voice);
+ },5000);
+}
+
+function pauseGame(){
+ clearInterval(gameTimer);
+ running=false;
+ document.getElementById("status").textContent="ቆሟል";
+}
+
+function resetGame(){
+ pauseGame();
+ available=Array.from({length:75},(_,i)=>i+1);
+ document.getElementById("last").textContent="--";
+ document.querySelectorAll("#board .num").forEach(x=>x.classList.remove("called"));
+ document.getElementById("status").textContent="እንደገና ለመጀመር Start ተጫን";
+}
+</script>
+</body>
+</html>
